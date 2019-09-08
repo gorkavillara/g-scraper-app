@@ -1,4 +1,5 @@
 const io = require("./index.js").io;
+const GoogleController = require("./controllers/GoogleController");
 
 module.exports = socket => {
 	socket.emit("mensajeConsola", "Conectado al socket");
@@ -7,7 +8,6 @@ module.exports = socket => {
 		io.emit("finBusqueda");
 	});
 	socket.on("buscaMasivo", async (cola, mostrarSoloEmails) => {
-		console.log(mostrarSoloEmails);
 		for (let i = 0; i < cola.length; i++) {
 			let data = {
 				localidad: cola[i].localidad,

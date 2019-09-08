@@ -24,7 +24,6 @@ const devuelveEntre = (texto, inicio, fin) => {
 const devuelveDetalles = async info => {
 	info.email = "";
 	info.facebook = "";
-	console.log(info.nombre);
 	if (typeof info.web !== "undefined") {
 		const browser = await puppeteer.launch({ headless: true });
 		try {
@@ -67,6 +66,8 @@ const devuelveDetalles = async info => {
 
 const buscaSocket = async (codigos, socket, mostrarSoloEmails = false) => {
 	// let resultados = [];
+	let num_pagina = 0;
+	let num_resultados = 0;
 	let hayNext = true;
 	let botonNext = null;
 	let nodesNombres = [];
@@ -80,6 +81,7 @@ const buscaSocket = async (codigos, socket, mostrarSoloEmails = false) => {
 			width: 1920,
 			height: 1080
 		});
+		socket.emit("statusUpdate", { status: "Buscando", msg: `Abriendo Google` });
 		await page.goto("https://google.com");
 		await page.type(
 			"input.gLFyf.gsfi",
@@ -92,6 +94,8 @@ const buscaSocket = async (codigos, socket, mostrarSoloEmails = false) => {
 		await masSitios.click();
 
 		while (hayNext) {
+			num_pagina++;
+			socket.emit("statusUpdate", { status: "Buscando", msg: `Buscando en página ${num_pagina}...` });
 			await page.waitForSelector("div.rl_full-list");
 
 			/////////////
@@ -107,6 +111,8 @@ const buscaSocket = async (codigos, socket, mostrarSoloEmails = false) => {
 			nodesNombres = await page.$$(".dbg0pd");
 			tmpNombre = "";
 			for (let i in nodesNombres) {
+				num_resultados++;
+				socket.emit("statusUpdate", { status: "Buscando", msg: `Resultado ${i + 1} de ${nodesNombres.length} - Página: ${num_pagina}...` });
 				let nodo = nodesNombres[i];
 				let resultado = {};
 				await nodo.click();
@@ -169,11 +175,13 @@ const buscaSocket = async (codigos, socket, mostrarSoloEmails = false) => {
 				hayNext = false;
 			}
 		}
+		socket.emit("statusUpdate", { status: "Completado", msg: `Búsqueda completada con ${num_resultados} resultados` });
 		await browser.close();
 		return true;
 	} catch (err) {
 		// console.error(err);
 		console.log("Error");
+		socket.emit("statusUpdate", { status: "Error", msg: `No hay resultados` });
 		await browser.close();
 		return false;
 	}
